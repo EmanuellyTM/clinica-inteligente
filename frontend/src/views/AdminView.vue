@@ -3,7 +3,7 @@
     <div class="hero admin-hero">
       <div>
         <h2>Painel administrativo</h2>
-        <p>Visão geral do sistema, próximos atendimentos e usuários cadastrados.</p>
+        <p>Visão geral do sistema, próximos atendimentos, usuários e todos os agendamentos.</p>
       </div>
     </div>
 
@@ -28,7 +28,7 @@
       <section class="card" v-if="data">
         <div class="row space-between wrap-row">
           <h3>Próximos agendamentos</h3>
-          <button @click="fetchDashboard">Atualizar</button>
+          <button @click="refreshAll">Atualizar</button>
         </div>
 
         <ul class="clean-list" v-if="data.nextAppointments?.length">
@@ -71,6 +71,53 @@
       </section>
     </div>
 
+    <section class="card" v-if="appointments.length">
+      <div class="row space-between wrap-row">
+        <h3>Todos os agendamentos</h3>
+        <span class="muted-text">{{ appointments.length }} registro(s)</span>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Paciente</th>
+              <th>Médico</th>
+              <th>Especialidade</th>
+              <th>Data</th>
+              <th>Endereço</th>
+              <th>Alerta de chuva</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr v-for="item in appointments" :key="item._id">
+              <td>{{ item.patient?.name || '-' }}</td>
+              <td>{{ item.doctorName }}</td>
+              <td>{{ item.specialty }}</td>
+              <td>{{ formatDate(item.date) }}</td>
+              <td>{{ formatAddress(item.address) }}</td>
+              <td>
+                <span
+                  :class="item.weatherAlert?.hasRain ? 'badge warning' : 'badge success'"
+                >
+                  {{ item.weatherAlert?.summary || 'Sem dados' }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card" v-else>
+      <h3>Todos os agendamentos</h3>
+      <div class="empty-state">
+        <strong>Nenhum agendamento encontrado.</strong>
+        <p>Assim que usuários criarem consultas, os registros aparecerão aqui.</p>
+      </div>
+    </section>
+
     <section class="card" v-if="data">
       <h3>Usuários recentes</h3>
 
@@ -109,6 +156,7 @@ import { computed, onMounted, ref } from 'vue'
 import api from '../services/api'
 
 const data = ref(null)
+const appointments = ref([])
 const error = ref('')
 
 const nextAppointmentsCount = computed(() => {
@@ -116,16 +164,35 @@ const nextAppointmentsCount = computed(() => {
 })
 
 async function fetchDashboard() {
+  const response = await api.get('/admin/dashboard')
+  data.value = response.data
+}
+
+async function fetchAppointments() {
+  const response = await api.get('/appointments')
+  appointments.value = response.data
+}
+
+async function refreshAll() {
   error.value = ''
 
   try {
-    const response = await api.get('/admin/dashboard')
-    data.value = response.data
+    await Promise.all([fetchDashboard(), fetchAppointments()])
   } catch (err) {
     error.value =
       err.response?.data?.message || 'Erro ao carregar painel administrativo'
   }
 }
 
-onMounted(fetchDashboard)
+function formatDate(date) {
+  return new Date(date).toLocaleString('pt-BR')
+}
+
+function formatAddress(address) {
+  if (!address) return '-'
+
+  return `${address.street || ''}, ${address.neighborhood || ''} - ${address.city || ''}/${address.state || ''}`
+}
+
+onMounted(refreshAll)
 </script>
