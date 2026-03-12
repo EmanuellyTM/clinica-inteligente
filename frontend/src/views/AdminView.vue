@@ -12,10 +12,12 @@
         <strong>{{ data.usersCount }}</strong>
         <span>Usuários</span>
       </div>
+
       <div class="card stat">
         <strong>{{ data.appointmentsCount }}</strong>
         <span>Agendamentos</span>
       </div>
+
       <div class="card stat">
         <strong>{{ nextAppointmentsCount }}</strong>
         <span>Próximos atendimentos</span>
@@ -30,10 +32,22 @@
         </div>
 
         <ul class="clean-list" v-if="data.nextAppointments?.length">
-          <li v-for="item in data.nextAppointments" :key="item._id" class="list-card">
-            <strong>{{ new Date(item.date).toLocaleString('pt-BR') }}</strong>
-            <span>{{ item.patient?.name || 'Paciente não informado' }} com {{ item.doctorName }}</span>
-            <small>{{ item.specialty }}</small>
+          <li
+            v-for="item in data.nextAppointments"
+            :key="item._id"
+            class="list-card"
+          >
+            <strong class="appointment-date">
+              {{ new Date(item.date).toLocaleString('pt-BR') }}
+            </strong>
+
+            <p class="appointment-main">
+              {{ item.patient?.name || 'Paciente não informado' }} com {{ item.doctorName }}
+            </p>
+
+            <small class="appointment-specialty">
+              {{ item.specialty }}
+            </small>
           </li>
         </ul>
 
@@ -45,10 +59,14 @@
 
       <section class="card admin-side" v-if="data">
         <h3>Resumo rápido</h3>
+
         <ul class="clean-list summary-list">
           <li>Pacientes e equipe podem acessar o sistema com autenticação JWT.</li>
           <li>Consultas podem trazer endereço por CEP e alerta de chuva.</li>
-          <li>Usuários com perfil <code>admin</code> ou <code>secretary</code> acessam este painel.</li>
+          <li>
+            Usuários com perfil <code>admin</code> ou <code>secretary</code>
+            acessam este painel.
+          </li>
         </ul>
       </section>
     </div>
@@ -65,6 +83,7 @@
               <th>Perfil</th>
             </tr>
           </thead>
+
           <tbody>
             <tr v-for="user in data.users" :key="user._id">
               <td>{{ user.name }}</td>
@@ -91,15 +110,20 @@ import api from '../services/api'
 
 const data = ref(null)
 const error = ref('')
-const nextAppointmentsCount = computed(() => data.value?.nextAppointments?.length || 0)
+
+const nextAppointmentsCount = computed(() => {
+  return data.value?.nextAppointments?.length || 0
+})
 
 async function fetchDashboard() {
   error.value = ''
+
   try {
     const response = await api.get('/admin/dashboard')
     data.value = response.data
   } catch (err) {
-    error.value = err.response?.data?.message || 'Erro ao carregar painel administrativo'
+    error.value =
+      err.response?.data?.message || 'Erro ao carregar painel administrativo'
   }
 }
 

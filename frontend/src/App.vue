@@ -28,7 +28,9 @@ const token = ref('')
 const user = ref(null)
 
 const isAuthenticated = computed(() => Boolean(token.value))
-const canAccessAdmin = computed(() => isAuthenticated.value && ['admin', 'secretary'].includes(user.value?.role))
+const canAccessAdmin = computed(() => {
+  return isAuthenticated.value && ['admin', 'secretary'].includes(user.value?.role)
+})
 
 function refreshAuthState() {
   token.value = localStorage.getItem('token') || ''
