@@ -88,6 +88,6 @@ O sistema trabalha com diferentes perfis de usuário:
 - OpenWeather
 
 ### Deploy
-- Frontend publicado em ambiente de hospedagem web
+- Frontend publicado no Vercel
 - Backend publicado no Render
 - Banco hospedado no MongoDB Atlas
