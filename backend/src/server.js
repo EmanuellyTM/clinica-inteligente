@@ -1,0 +1,25 @@
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+const morgan = require('morgan');
+const connectDB = require('./config/db');
+const authRoutes = require('./routes/auth.routes');
+const appointmentRoutes = require('./routes/appointment.routes');
+const integrationRoutes = require('./routes/integration.routes');
+const adminRoutes = require('./routes/admin.routes');
+const app = express();
+connectDB();
+app.use(cors({ origin: process.env.CLIENT_URL || '*' }));
+app.use(express.json());
+app.use(morgan('dev'));
+app.get('/api/health', (_req, res) => res.json({ status: 'ok', service: 'Clinica Inteligente API' }));
+app.use('/api/auth', authRoutes);
+app.use('/api/appointments', appointmentRoutes);
+app.use('/api/integrations', integrationRoutes);
+app.use('/api/admin', adminRoutes);
+app.use((err, _req, res, _next) => {
+  console.error(err);
+  res.status(err.status || 500).json({ message: err.message || 'Erro interno do servidor' });
+});
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));

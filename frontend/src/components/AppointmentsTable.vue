@@ -1,0 +1,6 @@
+<template><section class="card"><div class="row space-between"><h3>Agendamentos</h3><button @click="$emit('refresh')">Atualizar</button></div><div class="table-wrap"><table><thead><tr><th>Paciente</th><th>Médico</th><th>Especialidade</th><th>Data</th><th>Endereço</th><th>Alerta de chuva</th><th>Ações</th></tr></thead><tbody><tr v-for="item in appointments" :key="item._id"><td>{{ item.patient?.name || '-' }}</td><td>{{ item.doctorName }}</td><td>{{ item.specialty }}</td><td>{{ formatDate(item.date) }}</td><td>{{ formatAddress(item.address) }}</td><td><span :class="item.weatherAlert?.hasRain ? 'badge warning' : 'badge success'">{{ item.weatherAlert?.summary || 'Sem dados' }}</span></td><td><button class="danger" @click="$emit('remove', item._id)">Excluir</button></td></tr><tr v-if="!appointments.length"><td colspan="7">Nenhum agendamento encontrado.</td></tr></tbody></table></div></section></template>
+<script setup>
+defineProps({ appointments: { type: Array, default: () => [] } }); defineEmits(['remove', 'refresh'])
+function formatDate(date) { return new Date(date).toLocaleString('pt-BR') }
+function formatAddress(address) { return address ? `${address.street || ''}, ${address.neighborhood || ''} - ${address.city || ''}/${address.state || ''}` : '-' }
+</script>
