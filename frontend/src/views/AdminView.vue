@@ -112,6 +112,7 @@
 
     <section class="card" v-else>
       <h3>Todos os agendamentos</h3>
+
       <div class="empty-state">
         <strong>Nenhum agendamento encontrado.</strong>
         <p>Assim que usuários criarem consultas, os registros aparecerão aqui.</p>

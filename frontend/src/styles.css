@@ -305,6 +305,12 @@ small {
   background: #f8fafc;
 }
 
+.muted-text {
+  color: #64748b;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
 code {
   background: #e2e8f0;
   border-radius: 8px;
@@ -387,11 +393,5 @@ code {
   select,
   button {
     font-size: 0.98rem;
-  }
-
-  .muted-text {
-  color: #64748b;
-  font-size: 0.95rem;
-  font-weight: 600;
   }
 }
