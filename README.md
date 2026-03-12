@@ -2,7 +2,7 @@
 
 Sistema web desenvolvido para gerenciamento de consultas médicas, com autenticação de usuários, agendamento de consultas, integração com CEP e previsão do tempo, além de painel administrativo para acompanhamento dos dados do sistema.
 
-> **Projeto desenvolvido para fins acadêmicos**, como trabalho de faculdade, com o objetivo de aplicar conceitos de desenvolvimento full stack, autenticação, integração com APIs externas, persistência de dados e deploy de aplicações web.
+> **Projeto desenvolvido para trabalho de faculdade**, com o objetivo de aplicar conceitos de desenvolvimento full stack, autenticação, integração com APIs externas, persistência de dados e deploy de aplicações web.
 
 ---
 
