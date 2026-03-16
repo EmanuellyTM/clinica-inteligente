@@ -120,7 +120,10 @@
     </section>
 
     <section class="card" v-if="data">
-      <h3>Usuários recentes</h3>
+      <div class="row space-between wrap-row">
+        <h3>Usuários recentes</h3>
+        <span class="muted-text">{{ data.users?.length || 0 }} usuário(s)</span>
+      </div>
 
       <div class="table-wrap" v-if="data.users?.length">
         <table>
@@ -129,14 +132,25 @@
               <th>Nome</th>
               <th>E-mail</th>
               <th>Perfil</th>
+              <th>Ações</th>
             </tr>
           </thead>
 
           <tbody>
-            <tr v-for="user in data.users" :key="user._id">
-              <td>{{ user.name }}</td>
-              <td>{{ user.email }}</td>
-              <td>{{ user.role }}</td>
+            <tr v-for="userItem in data.users" :key="userItem._id">
+              <td>{{ userItem.name }}</td>
+              <td>{{ userItem.email }}</td>
+              <td>{{ userItem.role }}</td>
+              <td>
+                <button
+                  v-if="canDeleteUser(userItem)"
+                  class="danger"
+                  @click="removeUser(userItem)"
+                >
+                  Excluir
+                </button>
+                <span v-else class="muted-text">—</span>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -148,52 +162,82 @@
       </div>
     </section>
 
+    <p v-if="success" class="success">{{ success }}</p>
     <p v-if="error" class="error">{{ error }}</p>
   </section>
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
-import api from '../services/api'
+import { computed, onMounted, ref } from 'vue';
+import api from '../services/api';
 
-const data = ref(null)
-const appointments = ref([])
-const error = ref('')
+const data = ref(null);
+const appointments = ref([]);
+const error = ref('');
+const success = ref('');
+
+const loggedUser = ref(JSON.parse(localStorage.getItem('user') || 'null'));
 
 const nextAppointmentsCount = computed(() => {
-  return data.value?.nextAppointments?.length || 0
-})
+  return data.value?.nextAppointments?.length || 0;
+});
 
 async function fetchDashboard() {
-  const response = await api.get('/admin/dashboard')
-  data.value = response.data
+  const response = await api.get('/admin/dashboard');
+  data.value = response.data;
 }
 
 async function fetchAppointments() {
-  const response = await api.get('/appointments')
-  appointments.value = response.data
+  const response = await api.get('/appointments');
+  appointments.value = response.data;
 }
 
 async function refreshAll() {
-  error.value = ''
+  error.value = '';
+  success.value = '';
 
   try {
-    await Promise.all([fetchDashboard(), fetchAppointments()])
+    await Promise.all([fetchDashboard(), fetchAppointments()]);
   } catch (err) {
     error.value =
-      err.response?.data?.message || 'Erro ao carregar painel administrativo'
+      err.response?.data?.message || 'Erro ao carregar painel administrativo';
   }
 }
 
 function formatDate(date) {
-  return new Date(date).toLocaleString('pt-BR')
+  return new Date(date).toLocaleString('pt-BR');
 }
 
 function formatAddress(address) {
-  if (!address) return '-'
+  if (!address) return '-';
 
-  return `${address.street || ''}, ${address.neighborhood || ''} - ${address.city || ''}/${address.state || ''}`
+  return `${address.street || ''}, ${address.neighborhood || ''} - ${address.city || ''}/${address.state || ''}`;
 }
 
-onMounted(refreshAll)
+function canDeleteUser(userItem) {
+  const currentUserId = loggedUser.value?.id || loggedUser.value?._id;
+  return String(userItem._id) !== String(currentUserId);
+}
+
+async function removeUser(userItem) {
+  const confirmed = window.confirm(
+    `Tem certeza que deseja excluir o cadastro de ${userItem.name}? Essa ação também removerá os agendamentos desse usuário.`
+  );
+
+  if (!confirmed) return;
+
+  error.value = '';
+  success.value = '';
+
+  try {
+    await api.delete(`/admin/users/${userItem._id}`);
+    success.value = 'Usuário removido com sucesso.';
+    await refreshAll();
+  } catch (err) {
+    error.value =
+      err.response?.data?.message || 'Erro ao excluir usuário.';
+  }
+}
+
+onMounted(refreshAll);
 </script>
