@@ -22,22 +22,23 @@ connectDB();
 app.disable('x-powered-by');
 
 app.use(
-  helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        connectSrc: ["'self'", process.env.CLIENT_URL || "'self'"],
-        imgSrc: ["'self'", 'data:'],
-        objectSrc: ["'none'"],
-        frameAncestors: ["'none'"],
-        baseUri: ["'self'"],
-        formAction: ["'self'"]
+  cors({
+    origin(origin, callback) {
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
       }
+
+      return callback(new Error('Origem não permitida pelo CORS'));
     },
-    crossOriginEmbedderPolicy: false
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: false
   })
 );
 
+app.options('*', cors());
 
 const allowedOrigins = [process.env.CLIENT_URL].filter(Boolean);
 
