@@ -13,8 +13,8 @@ const registerValidator = [
     .normalizeEmail(),
 
   body('password')
-    .isLength({ min: 8, max: 128 })
-    .withMessage('A senha deve ter entre 8 e 128 caracteres.'),
+    .isLength({ min: 6, max: 128 })
+    .withMessage('A senha deve ter entre 6 e 128 caracteres.'),
 
   body('role')
     .optional()
@@ -30,7 +30,7 @@ const loginValidator = [
     .normalizeEmail(),
 
   body('password')
-    .isLength({ min: 8, max: 128 })
+    .isLength({ min: 6, max: 128 })
     .withMessage('Senha inválida.')
 ];
 
