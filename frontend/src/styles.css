@@ -311,6 +311,12 @@ small {
   font-weight: 600;
 }
 
+.actions-cell {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
 code {
   background: #e2e8f0;
   border-radius: 8px;

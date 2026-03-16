@@ -3,7 +3,7 @@
     <div class="hero admin-hero">
       <div>
         <h2>Painel administrativo</h2>
-        <p>Visão geral do sistema, próximos atendimentos, usuários e todos os agendamentos.</p>
+        <p>Visão geral do sistema, aprovações pendentes, usuários e agendamentos.</p>
       </div>
     </div>
 
@@ -23,6 +23,42 @@
         <span>Próximos atendimentos</span>
       </div>
     </div>
+
+    <section class="card" v-if="data?.pendingSecretaries?.length">
+      <div class="row space-between wrap-row">
+        <h3>Secretários pendentes de aprovação</h3>
+        <span class="muted-text">{{ data.pendingSecretaries.length }} pendente(s)</span>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>E-mail</th>
+              <th>Perfil</th>
+              <th>Status</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr v-for="userItem in data.pendingSecretaries" :key="userItem._id">
+              <td>{{ userItem.name }}</td>
+              <td>{{ userItem.email }}</td>
+              <td>{{ userItem.role }}</td>
+              <td>
+                <span class="badge warning">Pendente</span>
+              </td>
+              <td class="actions-cell">
+                <button @click="approveUser(userItem)">Aprovar</button>
+                <button class="danger" @click="removeUser(userItem)">Excluir</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
 
     <div class="grid admin-grid">
       <section class="card" v-if="data">
@@ -62,11 +98,8 @@
 
         <ul class="clean-list summary-list">
           <li>Pacientes e equipe podem acessar o sistema com autenticação JWT.</li>
-          <li>Consultas podem trazer endereço por CEP e alerta de chuva.</li>
-          <li>
-            Usuários com perfil <code>admin</code> ou <code>secretary</code>
-            acessam este painel.
-          </li>
+          <li>Secretários só entram após aprovação do administrador.</li>
+          <li>Usuários com perfil <code>admin</code> acessam aprovações e exclusões.</li>
         </ul>
       </section>
     </div>
@@ -132,6 +165,7 @@
               <th>Nome</th>
               <th>E-mail</th>
               <th>Perfil</th>
+              <th>Status</th>
               <th>Ações</th>
             </tr>
           </thead>
@@ -141,6 +175,13 @@
               <td>{{ userItem.name }}</td>
               <td>{{ userItem.email }}</td>
               <td>{{ userItem.role }}</td>
+              <td>
+                <span
+                  :class="userItem.approved ? 'badge success' : 'badge warning'"
+                >
+                  {{ userItem.approved ? 'Aprovado' : 'Pendente' }}
+                </span>
+              </td>
               <td>
                 <button
                   v-if="canDeleteUser(userItem)"
@@ -217,6 +258,20 @@ function formatAddress(address) {
 function canDeleteUser(userItem) {
   const currentUserId = loggedUser.value?.id || loggedUser.value?._id;
   return String(userItem._id) !== String(currentUserId);
+}
+
+async function approveUser(userItem) {
+  error.value = '';
+  success.value = '';
+
+  try {
+    await api.patch(`/admin/users/${userItem._id}/approve`);
+    success.value = `Secretário ${userItem.name} aprovado com sucesso.`;
+    await refreshAll();
+  } catch (err) {
+    error.value =
+      err.response?.data?.message || 'Erro ao aprovar secretário.';
+  }
 }
 
 async function removeUser(userItem) {

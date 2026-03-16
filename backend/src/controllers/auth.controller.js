@@ -3,31 +3,52 @@ const User = require('../models/User');
 
 function createToken(user) {
   return jwt.sign(
-    { id: user._id, role: user.role },
+    {
+      id: user._id,
+      role: user.role
+    },
     process.env.JWT_SECRET,
-    { expiresIn: '8h' }
+    {
+      expiresIn: '8h'
+    }
   );
 }
 
 async function register(req, res) {
   const { name, email, password, role } = req.body;
 
-  const exists = await User.findOne({ email });
+  const existingUser = await User.findOne({ email });
 
-  if (exists) {
+  if (existingUser) {
     return res.status(409).json({
-      message: 'Não foi possível concluir o cadastro com os dados informados.'
+      message: 'Já existe um usuário cadastrado com este e-mail.'
     });
   }
 
   const safeRole = ['patient', 'secretary'].includes(role) ? role : 'patient';
+  const approved = safeRole === 'secretary' ? false : true;
 
   const user = await User.create({
     name,
     email,
     password,
-    role: safeRole
+    role: safeRole,
+    approved
   });
+
+  if (safeRole === 'secretary') {
+    return res.status(201).json({
+      message:
+        'Cadastro de secretário realizado com sucesso. Aguarde a aprovação do administrador para acessar o sistema.',
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        approved: user.approved
+      }
+    });
+  }
 
   return res.status(201).json({
     token: createToken(user),
@@ -35,7 +56,8 @@ async function register(req, res) {
       id: user._id,
       name: user.name,
       email: user.email,
-      role: user.role
+      role: user.role,
+      approved: user.approved
     }
   });
 }
@@ -51,13 +73,21 @@ async function login(req, res) {
     });
   }
 
+  if (user.role === 'secretary' && !user.approved) {
+    return res.status(403).json({
+      message:
+        'Seu cadastro de secretário ainda não foi aprovado pelo administrador.'
+    });
+  }
+
   return res.json({
     token: createToken(user),
     user: {
       id: user._id,
       name: user.name,
       email: user.email,
-      role: user.role
+      role: user.role,
+      approved: user.approved
     }
   });
 }
