@@ -24,7 +24,7 @@
       </div>
     </div>
 
-    <section class="card" v-if="data?.pendingSecretaries?.length">
+    <section class="card" v-if="isAdmin && data?.pendingSecretaries?.length">
       <div class="row space-between wrap-row">
         <h3>Secretários pendentes de aprovação</h3>
         <span class="muted-text">{{ data.pendingSecretaries.length }} pendente(s)</span>
@@ -51,8 +51,27 @@
                 <span class="badge warning">Pendente</span>
               </td>
               <td class="actions-cell">
-                <button @click="approveUser(userItem)">Aprovar</button>
-                <button class="danger" @click="removeUser(userItem)">Excluir</button>
+                <button
+                  v-if="isAdmin"
+                  @click="approveUser(userItem)"
+                >
+                  Aprovar
+                </button>
+
+                <button
+                  v-if="canDeleteUser(userItem)"
+                  class="danger"
+                  @click="removeUser(userItem)"
+                >
+                  Excluir
+                </button>
+
+                <span
+                  v-if="!isAdmin && !canDeleteUser(userItem)"
+                  class="muted-text"
+                >
+                  —
+                </span>
               </td>
             </tr>
           </tbody>
@@ -99,7 +118,7 @@
         <ul class="clean-list summary-list">
           <li>Pacientes e equipe podem acessar o sistema com autenticação JWT.</li>
           <li>Secretários só entram após aprovação do administrador.</li>
-          <li>Usuários com perfil <code>admin</code> acessam aprovações e exclusões.</li>
+          <li>Somente administradores podem aprovar e excluir cadastros.</li>
         </ul>
       </section>
     </div>
@@ -190,6 +209,7 @@
                 >
                   Excluir
                 </button>
+
                 <span v-else class="muted-text">—</span>
               </td>
             </tr>
@@ -221,6 +241,10 @@ const loggedUser = ref(JSON.parse(localStorage.getItem('user') || 'null'));
 
 const nextAppointmentsCount = computed(() => {
   return data.value?.nextAppointments?.length || 0;
+});
+
+const isAdmin = computed(() => {
+  return loggedUser.value?.role === 'admin';
 });
 
 async function fetchDashboard() {
@@ -257,10 +281,17 @@ function formatAddress(address) {
 
 function canDeleteUser(userItem) {
   const currentUserId = loggedUser.value?.id || loggedUser.value?._id;
-  return String(userItem._id) !== String(currentUserId);
+
+  if (!isAdmin.value) return false;
+  if (String(userItem._id) === String(currentUserId)) return false;
+  if (userItem.role === 'admin') return false;
+
+  return true;
 }
 
 async function approveUser(userItem) {
+  if (!isAdmin.value) return;
+
   error.value = '';
   success.value = '';
 
@@ -275,6 +306,8 @@ async function approveUser(userItem) {
 }
 
 async function removeUser(userItem) {
+  if (!canDeleteUser(userItem)) return;
+
   const confirmed = window.confirm(
     `Tem certeza que deseja excluir o cadastro de ${userItem.name}? Essa ação também removerá os agendamentos desse usuário.`
   );

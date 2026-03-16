@@ -88,6 +88,12 @@ async function deleteUser(req, res) {
     });
   }
 
+  if (user.role === 'admin') {
+    return res.status(403).json({
+      message: 'Não é permitido excluir um usuário administrador.'
+    });
+  }
+
   await Appointment.deleteMany({ patient: user._id });
   await user.deleteOne();
 
