@@ -144,7 +144,7 @@ async function checkAvailability() {
     const { data } = await api.get('/appointments/availability', {
       params: {
         doctorName: form.doctorName,
-        date: form.date
+        date: new Date(form.date).toISOString()
       }
     });
 
@@ -196,13 +196,15 @@ async function submit() {
     return;
   }
 
+  const payload = {
+    doctorName: form.doctorName,
+    specialty: form.specialty,
+    date: new Date(form.date).toISOString(),
+    cep: form.cep.replace(/\D/g, '')
+  };
+
   try {
-    await api.post('/appointments', {
-      doctorName: form.doctorName,
-      specialty: form.specialty,
-      date: form.date,
-      cep: form.cep
-    });
+    await api.post('/appointments', payload);
 
     message.value = 'Agendamento criado com sucesso.';
 
@@ -217,10 +219,12 @@ async function submit() {
 
     emit('saved');
   } catch (err) {
-    console.error('Erro ao criar agendamento:', err.response?.data || err);
+    console.error('Erro ao criar agendamento:', JSON.stringify(err.response?.data, null, 2));
 
     if (err.response?.data?.errors?.length) {
-      error.value = err.response.data.errors.map((item) => item.message).join(' | ');
+      error.value = err.response.data.errors
+        .map((item) => `${item.field}: ${item.message}`)
+        .join(' | ');
       return;
     }
 
