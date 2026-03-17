@@ -121,7 +121,8 @@ async function lookupCep() {
   if (!form.cep) return;
 
   try {
-    const { data } = await api.get(`/integrations/cep/${form.cep}`);
+    const normalizedCep = form.cep.replace(/\D/g, '');
+    const { data } = await api.get(`/integrations/cep/${normalizedCep}`);
     address.value = data;
   } catch (err) {
     address.value = null;
@@ -200,7 +201,7 @@ async function submit() {
     doctorName: form.doctorName,
     specialty: form.specialty,
     date: new Date(form.date).toISOString(),
-    cep: form.cep.replace(/\D/g, '')
+    cep: form.cep
   };
 
   try {

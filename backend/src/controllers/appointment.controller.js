@@ -20,6 +20,10 @@ function getOneHourWindow(date) {
   return { start, end };
 }
 
+function normalizeCep(value) {
+  return String(value || '').replace(/\D/g, '');
+}
+
 async function ensureScheduleAvailability({ doctorName, date, ignoreId = null }) {
   const { start, end } = getOneHourWindow(date);
 
@@ -96,7 +100,8 @@ async function createAppointment(req, res) {
 
   await ensureScheduleAvailability({ doctorName, date });
 
-  const address = await getAddressByCep(cep);
+  const normalizedCep = normalizeCep(cep);
+  const address = await getAddressByCep(normalizedCep);
   const weatherAlert = await getRainForecastForDate(
     address.city,
     address.state,
@@ -108,7 +113,7 @@ async function createAppointment(req, res) {
     doctorName,
     specialty,
     date,
-    cep,
+    cep: normalizedCep,
     address,
     weatherAlert
   });
@@ -159,9 +164,11 @@ async function updateAppointment(req, res) {
   }
 
   if (payload.cep) {
-    const address = await getAddressByCep(payload.cep);
-    payload.address = address;
+    const normalizedCep = normalizeCep(payload.cep);
+    const address = await getAddressByCep(normalizedCep);
 
+    payload.cep = normalizedCep;
+    payload.address = address;
     payload.weatherAlert = await getRainForecastForDate(
       address.city,
       address.state,

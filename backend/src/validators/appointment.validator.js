@@ -1,5 +1,9 @@
 const { body, query, param } = require('express-validator');
 
+function normalizeCep(value) {
+  return String(value || '').replace(/\D/g, '');
+}
+
 const createAppointmentValidator = [
   body('doctorName')
     .trim()
@@ -35,10 +39,10 @@ const createAppointmentValidator = [
     }),
 
   body('cep')
-    .trim()
-    .notEmpty()
-    .withMessage('CEP obrigatório.')
-    .matches(/^\\d{5}-?\\d{3}$/)
+    .customSanitizer(normalizeCep)
+    .isLength({ min: 8, max: 8 })
+    .withMessage('CEP inválido.')
+    .matches(/^\d{8}$/)
     .withMessage('CEP inválido.')
 ];
 
@@ -75,8 +79,10 @@ const updateAppointmentValidator = [
 
   body('cep')
     .optional()
-    .trim()
-    .matches(/^\\d{5}-?\\d{3}$/)
+    .customSanitizer(normalizeCep)
+    .isLength({ min: 8, max: 8 })
+    .withMessage('CEP inválido.')
+    .matches(/^\d{8}$/)
     .withMessage('CEP inválido.')
 ];
 
