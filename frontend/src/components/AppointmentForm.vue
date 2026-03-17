@@ -123,8 +123,10 @@ async function lookupCep() {
   try {
     const { data } = await api.get(`/integrations/cep/${form.cep}`);
     address.value = data;
-  } catch {
+  } catch (err) {
     address.value = null;
+    error.value =
+      err.response?.data?.message || 'Não foi possível localizar o CEP informado.';
   }
 }
 
@@ -157,17 +159,50 @@ async function checkAvailability() {
   }
 }
 
+function validateFormBeforeSubmit() {
+  if (!form.doctorName) {
+    error.value = 'Selecione um médico.';
+    return false;
+  }
+
+  if (!form.specialty) {
+    error.value = 'A especialidade não foi preenchida.';
+    return false;
+  }
+
+  if (!form.date) {
+    error.value = 'Selecione a data e o horário.';
+    return false;
+  }
+
+  if (!form.cep) {
+    error.value = 'Informe o CEP.';
+    return false;
+  }
+
+  if (!isSlotAvailable.value) {
+    error.value = 'Escolha um horário disponível antes de agendar.';
+    return false;
+  }
+
+  return true;
+}
+
 async function submit() {
   error.value = '';
   message.value = '';
 
-  if (!isSlotAvailable.value) {
-    error.value = 'Escolha um horário disponível antes de agendar.';
+  if (!validateFormBeforeSubmit()) {
     return;
   }
 
   try {
-    await api.post('/appointments', form);
+    await api.post('/appointments', {
+      doctorName: form.doctorName,
+      specialty: form.specialty,
+      date: form.date,
+      cep: form.cep
+    });
 
     message.value = 'Agendamento criado com sucesso.';
 
@@ -177,14 +212,20 @@ async function submit() {
     form.date = '';
     form.cep = '';
     address.value = null;
-
     availabilityMessage.value = '';
     isSlotAvailable.value = false;
 
     emit('saved');
   } catch (err) {
+    console.error('Erro ao criar agendamento:', err.response?.data || err);
+
+    if (err.response?.data?.errors?.length) {
+      error.value = err.response.data.errors.map((item) => item.message).join(' | ');
+      return;
+    }
+
     error.value =
-      err.response?.data?.message || 'Erro ao criar agendamento';
+      err.response?.data?.message || 'Erro ao criar agendamento.';
   }
 }
 </script>
